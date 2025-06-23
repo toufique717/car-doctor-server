@@ -1,14 +1,23 @@
 const express = require('express');
+const cookieparser = require('cookie-parser');
+
 const cors = require('cors');
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 require('dotenv').config();
+const jwt = require('jsonwebtoken')
 const app =  express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors(
+  {
+    origin:['http://localhost:5173'],
+    credentials:true
+  }
+));
 app.use(express.json());
+app.use(cookieparser())
 
 
 
@@ -45,6 +54,9 @@ async function run() {
      // const result = await collection.find({}).toArray();
       res.send(result);
     });
+
+
+    
 
 
     app.patch('/bookings/:id',async(req,res)=>
@@ -109,9 +121,36 @@ async function run() {
 
     })
 
+
+
+    app.post('/jwt', async(req,res) =>
+    {
+      const user =req.body;
+      console.log(user);
+      //const result = await bookingcollection.insertOne(booking);
+      
+     // const token =jwt.sign(user,ACCESS_TOKEN_SECRET,{expiresIn : '1h'})
+
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+
+      res
+      .cookie('token',token,
+        {
+          httpOnly:true,
+          secure:false,
+          samesite:'none'
+        }
+      )
+      
+      
+      .send({success: true});
+
+    })
+
     app.get('/bookings', async (req, res) => {
 
       console.log(req.query.email);
+      console.log('tok tok token',req.cookies.token)
       let query = {};
       if(req.query?.email)
       {
